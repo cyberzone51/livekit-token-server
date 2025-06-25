@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
-from livekit.rtc.access_token import AccessToken
+from livekit.jwt import AccessToken
+
 
 import uvicorn
 import os

@@ -1,10 +1,8 @@
-from fastapi import FastAPI, Query
-from livekit.api import AccessToken
-
-
-
+from fastapi import FastAPI, Query, HTTPException
+import jwt
 import uvicorn
 import os
+import time
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="LiveKit Token Server")
@@ -36,24 +34,31 @@ def get_token(identity: str = Query(..., description="Participant identity"),
     - **room**: The name of the room to join
     """
     if not API_KEY or not API_SECRET:
-        return {"error": "API_KEY or API_SECRET not configured on the server"}, 500
+        raise HTTPException(status_code=500, detail="API_KEY or API_SECRET not configured on the server")
     
     # Create token with permissions
-    token = AccessToken(API_KEY, API_SECRET, identity=identity)
+    now = int(time.time())
+    exp = now + 86400  # Token expires in 24 hours
     
-    # Add grants for the token
-    token.add_grant({
-        "roomJoin": True,  # Allow joining the room
-        "room": room,      # Specify the room
-        "canPublish": True,  # Allow publishing audio/video
-        "canSubscribe": True,  # Allow subscribing to other participants
-        "canPublishData": True  # Allow publishing data
-    })
+    # Create claims for the JWT token
+    claims = {
+        "iss": API_KEY,  # Issuer
+        "nbf": now,      # Not Before
+        "exp": exp,      # Expiration Time
+        "sub": identity, # Subject (participant identity)
+        "video": {
+            "room": room,
+            "roomJoin": True,
+            "canPublish": True,
+            "canSubscribe": True,
+            "canPublishData": True
+        }
+    }
     
     # Generate the JWT token
-    jwt_token = token.to_jwt()
+    token = jwt.encode(claims, API_SECRET, algorithm="HS256")
     
-    return {"token": jwt_token}
+    return {"token": token}
 
 @app.get("/health")
 def health_check():

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
-from livekit import AccessToken
+from livekit.rtc.access_token import AccessToken
+
 import uvicorn
 import os
 from fastapi.middleware.cors import CORSMiddleware

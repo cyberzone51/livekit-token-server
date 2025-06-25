@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
-from livekit.jwt import AccessToken
+from livekit.api import AccessToken
+
 
 
 import uvicorn
